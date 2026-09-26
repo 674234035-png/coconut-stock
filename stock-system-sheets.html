@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ร้านมะพร้าวสองหนุ่ม — ระบบจัดการสต็อกสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F4EE;
+  --surface:#FFFFFF;
+  --field:#F7F6F1;
+  --ink:#1F2A22;
+  --ink-soft:#5E665C;
+  --line:#E4E0D5;
+  --accent:#2E6B4A;
+  --accent-dark:#1E4630;
+  --accent-soft:#E2EEE5;
+  --warn:#D9822B;
+  --warn-soft:#FDF0DE;
+  --danger:#C8453A;
+  --danger-dark:#A8352C;
+  --danger-soft:#FBE4E1;
+  --sidebar:#1E4630;
+  --sidebar-ink:#DCE8DF;
+  --sidebar-ink-dim:#9DB8A6;
+  /* playful palette for dashboard/report */
+  --c-green:#2E9E6A; --c-blue:#3A7BD5; --c-amber:#F0A33B; --c-coral:#E5645A;
+  --c-purple:#8A63D2; --c-teal:#1FA2A0; --c-pink:#D9579A;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(20,40,30,.05), 0 4px 14px rgba(20,40,30,.05);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0;
+  font-family:'IBM Plex Sans Thai',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.serif{font-family:'Noto Serif Thai',serif;}
+
+/* ---------- Login ---------- */
+#loginScreen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:var(--bg);
+  background-image: radial-gradient(rgba(46,107,74,.10) 1.3px, transparent 1.3px);
+  background-size:22px 22px;
+}
+.login-card{
+  width:100%; max-width:390px; background:#fff; border-radius:18px; overflow:hidden;
+  border:1px solid var(--line); box-shadow:0 18px 50px rgba(30,70,48,.16);
+}
+.login-head{
+  background:linear-gradient(135deg,#2E6B4A 0%,#1E4630 100%);
+  padding:32px 28px 26px; text-align:center; color:#fff;
+}
+.login-logo{
+  width:64px; height:64px; margin:0 auto 14px; border-radius:16px; background:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:2rem; line-height:1;
+  border:2px solid #E7C874; box-shadow:0 6px 16px rgba(0,0,0,.2);
+}
+.login-head h1{font-size:1.75rem; margin:0 0 4px; font-weight:700; color:#fff; letter-spacing:.01em;}
+.login-head p.sub{margin:0; font-size:1rem; color:rgba(255,255,255,.92); font-weight:500;}
+.login-body{padding:28px 28px 26px;}
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:.84rem; color:var(--ink); font-weight:600; margin-bottom:7px;}
+.field .input-wrap{position:relative; display:flex; align-items:center;}
+.field .input-wrap svg{position:absolute; left:12px; width:16px; height:16px; color:var(--accent); pointer-events:none;}
+.field input, .field select{
+  width:100%; padding:11px 12px 11px 38px; border:1px solid var(--line); border-radius:9px;
+  background:var(--field); color:var(--ink); font:inherit; font-size:.92rem;
+}
+.field input::placeholder{color:#A3ADA7;}
+.field input:focus, .field select:focus, button:focus-visible, .navlink:focus-visible, .tab:focus-visible{
+  outline:2px solid var(--accent); outline-offset:1px;
+}
+.btn-primary{
+  width:100%; padding:13px; background:var(--accent-dark); color:#fff; border:none;
+  border-radius:9px; font:inherit; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:6px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-primary svg{width:16px; height:16px;}
+.btn-primary:hover{background:var(--accent);}
+.login-error{color:var(--danger); font-size:.85rem; margin-top:10px; min-height:1em; text-align:center;}
+
+/* ---------- App shell ---------- */
+#app{display:none; min-height:100vh;}
+#app.active{display:flex;}
+.sidebar{
+  width:230px; flex:none; background:var(--sidebar); color:var(--sidebar-ink);
+  display:flex; flex-direction:column; padding:20px 14px;
+  padding-top:calc(20px + env(safe-area-inset-top,0px));
+}
+.brand{display:flex; align-items:center; gap:9px; padding:4px 8px 20px; border-bottom:1px solid rgba(255,255,255,.12); margin-bottom:14px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:#7FD1A2;}
+.brand-name{font-size:1rem; color:#FFFFFF; font-weight:700;}
+.brand-sub{font-size:.68rem; color:var(--sidebar-ink-dim); letter-spacing:.02em; margin-top:1px;}
+.nav-group-label{font-size:.68rem; color:var(--sidebar-ink-dim); padding:14px 10px 6px; text-transform:none;}
+.navlink{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:7px;
+  color:var(--sidebar-ink); text-decoration:none; cursor:pointer; font-size:.87rem; margin-bottom:2px;
+  border:none; background:transparent; width:100%; text-align:left; font-family:inherit;
+}
+.navlink svg{flex:none; width:16px; height:16px; opacity:.85;}
+.navlink:hover{background:rgba(255,255,255,.08);}
+.navlink.active{background:rgba(255,255,255,.16); color:#fff; font-weight:600;}
+.navlink .num{
+  width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,.09);
+  display:flex;align-items:center;justify-content:center;font-size:.68rem;flex:none;
+}
+.navlink.active .num{background:rgba(255,255,255,.22);}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid rgba(255,255,255,.12);}
+.who{display:flex; align-items:center; gap:9px; padding:8px 8px; font-size:.82rem;}
+.who .avatar{width:26px;height:26px;border-radius:50%;background:#E7C874; color:#1E4630; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:600; flex:none;}
+.who-name{font-weight:600; color:#fff;}
+.who-role{font-size:.72rem; color:var(--sidebar-ink-dim);}
+.logout-btn{
+  width:100%; margin-top:8px; padding:10px; background:#9E4A3C; border:1px solid rgba(243,236,220,.18);
+  color:#F7F1E4; border-radius:8px; font:inherit; font-size:.84rem; font-weight:600; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.logout-btn svg{width:15px; height:15px;}
+.logout-btn:hover{background:#86392D;}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow:hidden;}
+.topbar{
+  padding:16px 28px; border-bottom:1px solid var(--line); background:var(--surface);
+  display:flex; align-items:center; justify-content:space-between; flex:none;
+  padding-top:calc(16px + env(safe-area-inset-top,0px));
+}
+.topbar h2{margin:0; font-size:1.15rem; font-weight:600;}
+.topbar .desc{font-size:.82rem; color:var(--ink-soft); margin-top:2px;}
+.alert-pill{
+  display:flex; align-items:center; gap:6px; font-size:.78rem; padding:6px 11px; border-radius:20px;
+  background:#F7F1E1; color:#1E4630; border:1px solid #E2D3AA; cursor:pointer; font-weight:500;
+}
+.alert-pill.danger{background:#E6F0E8; color:#1E4630; border-color:#C6DCCD;}
+.content{flex:1; overflow-y:auto; padding:26px 28px 60px;}
+
+.panel{display:none;}
+.panel.active{display:block; animation:fadein .18s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(3px);} to{opacity:1; transform:none;}}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);}
+.card-pad{padding:20px 22px;}
+.section-title{font-size:.98rem; font-weight:600; margin:0 0 4px;}
+.section-sub{font-size:.82rem; color:var(--ink-soft); margin:0 0 16px;}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+@media(max-width:1000px){.grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:640px){.grid-3{grid-template-columns:1fr;}}
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+@media(max-width:1150px){.grid-4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.grid-4{grid-template-columns:1fr;}}
+.gap-top{margin-top:20px;}
+
+/* hero banner — green / cream / white only */
+.hero{
+  border-radius:16px; padding:22px 26px; margin-bottom:20px; color:#fff; position:relative; overflow:hidden;
+  background:linear-gradient(120deg,#1E4630 0%,#2E6B4A 60%,#4A8C66 100%);
+  display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.hero::before{content:''; position:absolute; width:230px; height:230px; border-radius:50%; background:rgba(243,236,220,.10); right:-60px; top:-100px;}
+.hero::after{content:''; position:absolute; width:130px; height:130px; border-radius:50%; border:18px solid rgba(243,236,220,.12); right:180px; bottom:-75px;}
+.hero h3{margin:0; font-size:1.3rem; position:relative;}
+.hero p{margin:5px 0 0; opacity:.85; font-size:.88rem; position:relative;}
+.hero-badges{display:flex; gap:8px; flex-wrap:wrap; position:relative;}
+.hero-badge{display:inline-flex; align-items:center; gap:6px; background:rgba(243,236,220,.16); border:1px solid rgba(243,236,220,.32); padding:7px 14px; border-radius:30px; font-size:.8rem;}
+.hero-badge svg{width:14px; height:14px;}
+.hero.cream{background:linear-gradient(120deg,#FBF7EC 0%,#F1E8D2 100%); color:#1E4630; border:1px solid #E6DBBE;}
+.hero.cream::before{background:rgba(46,107,74,.07);}
+.hero.cream::after{border-color:rgba(46,107,74,.08);}
+.hero.cream .hero-badge{background:#fff; border-color:#E0D4B4; color:#1E4630;}
+
+/* stat cards */
+.stat-fancy{border-radius:14px; padding:18px 20px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(30,70,48,.08); transition:transform .15s;}
+.stat-fancy:hover{transform:translateY(-2px);}
+.stat-fancy::after{content:''; position:absolute; right:-30px; top:-30px; width:105px; height:105px; border-radius:50%; background:rgba(255,255,255,.10);}
+.sf-icon{width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; margin-bottom:12px;}
+.sf-icon svg{width:20px; height:20px;}
+.sf-label{font-size:.82rem; opacity:.9;}
+.sf-value{font-size:1.6rem; font-weight:700; margin-top:2px; line-height:1.25;}
+.sf-foot{font-size:.74rem; opacity:.8; margin-top:6px;}
+.g-deep{background:linear-gradient(135deg,#2E6B4A,#1E4630); color:#fff;}
+.g-mid{background:linear-gradient(135deg,#6AA884,#3F7F5B); color:#fff;}
+.g-cream{background:linear-gradient(135deg,#FCF8EE,#F0E6CE); color:#1E4630; border:1px solid #E6DBBE;}
+.g-white{background:#fff; color:#1E4630; border:1px solid #DCE6DE;}
+.g-cream .sf-icon,.g-white .sf-icon{background:#E6F0E8; color:#2E6B4A;}
+.g-cream::after,.g-white::after{background:rgba(46,107,74,.06);}
+
+/* accent cards (green & cream tones) */
+.card.acc{border-top:4px solid var(--acc);}
+.acc-green{--acc:#2E6B4A; --acc-soft:#E6F0E8;}
+.acc-deep{--acc:#1E4630; --acc-soft:#E3ECE5;}
+.acc-light{--acc:#7DB592; --acc-soft:#EDF5EF;}
+.acc-cream{--acc:#D6C392; --acc-soft:#F7F1E1;}
+.ct-row{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+.ct-icon{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:var(--acc-soft); color:#2E6B4A; flex:none;}
+.ct-icon svg{width:17px; height:17px;}
+.ct-row .section-title{margin:0;}
+.acc .section-sub{margin-left:42px;}
+.acc .table-wrap thead th{background:var(--acc-soft); color:var(--ink);}
+
+/* bars */
+.bar-row{margin-bottom:13px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:.85rem; margin-bottom:5px;}
+.bar-top .muted{color:var(--ink-soft); font-size:.78rem; white-space:nowrap;}
+.bar-track{height:10px; border-radius:10px; background:#EEEBE1; overflow:hidden;}
+.bar-fill{height:100%; border-radius:10px; transition:width .5s ease;}
+.dot-i{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle;}
+
+/* chips / items */
+.chip{display:inline-block; padding:3px 10px; border-radius:20px; font-size:.74rem; font-weight:600; white-space:nowrap; border:1px solid transparent;}
+.chip.c-deep{background:#1E4630; color:#fff;}
+.chip.c-mid{background:#E6F0E8; color:#2E6B4A; border-color:#C6DCCD;}
+.chip.c-cream{background:#F4EBD3; color:#6B5A2E; border-color:#E2D3AA;}
+.exp-item{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 14px; border-radius:10px; margin-bottom:8px; background:#FBF8EF; border-left:4px solid;}
+.exp-item:last-child{margin-bottom:0;}
+.exp-item .en{font-weight:600; font-size:.88rem;}
+.exp-item .es{font-size:.76rem; color:var(--ink-soft); margin-top:2px;}
+.bill-chip{display:inline-block; padding:2px 9px; border-radius:7px; background:#E6F0E8; color:#1E4630; font-weight:700; font-size:.78rem;}
+.money-strong{font-weight:700; color:#1E4630;}
+.all-good{display:flex; align-items:center; gap:10px; padding:16px; border-radius:10px; background:#F1F6F1; color:#2E6B4A; font-size:.86rem; font-weight:500; border:1px dashed #C6DCCD;}
+.all-good svg{width:20px; height:20px; flex:none;}
+.rank{display:inline-flex; width:22px; height:22px; border-radius:7px; align-items:center; justify-content:center; font-size:.74rem; font-weight:700; margin-right:8px; vertical-align:middle;}
+.rank.r1{background:#1E4630; color:#fff;}
+.rank.r2{background:#4A8C66; color:#fff;}
+.rank.r3{background:#EFE4C8; color:#1E4630;}
+.rank.rn{background:#F1F4F1; color:var(--ink-soft);}
+.donut-wrap{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
+.donut{width:130px; height:130px; border-radius:50%; position:relative; flex:none;}
+.donut::after{content:''; position:absolute; inset:22px; background:var(--surface); border-radius:50%;}
+.donut-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; font-size:.72rem; color:var(--ink-soft);}
+.donut-center b{font-size:1.15rem; color:var(--ink);}
+.legend{display:flex; flex-direction:column; gap:7px; font-size:.83rem; flex:1; min-width:150px;}
+.legend-row{display:flex; justify-content:space-between; gap:10px;}
+
+.stat{padding:16px 18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);}
+.stat .label{font-size:.78rem; color:var(--ink-soft);}
+.stat .value{font-size:1.7rem; font-weight:600; margin-top:4px;}
+.stat .value.warn{color:var(--warn);}
+.stat .value.danger{color:var(--danger);}
+.stat .value.good{color:var(--accent);}
+
+table{width:100%; border-collapse:collapse; font-size:.86rem;}
+th{
+  text-align:left; padding:9px 10px; color:var(--ink-soft); font-weight:500; font-size:.76rem;
+  border-bottom:1px solid var(--line); white-space:nowrap;
+}
+td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+tbody tr:hover{background:var(--accent-soft);}
+.table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius);}
+.table-wrap table{border:none;}
+.table-wrap .table-wrap{border:none;}
+
+.tag{display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:500;}
+.tag.ok{background:var(--accent-soft); color:var(--accent-dark);}
+.tag.warn{background:var(--warn-soft); color:var(--warn);}
+.tag.danger{background:var(--danger-soft); color:var(--danger);}
+.tag.muted{background:var(--line); color:var(--ink-soft);}
+
+.btn{
+  padding:8px 14px; border-radius:7px; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  font:inherit; font-size:.83rem; cursor:pointer; font-weight:500;
+}
+.btn:hover{border-color:var(--accent);}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+.btn.primary:hover{background:var(--accent-dark); border-color:var(--accent-dark);}
+.btn.danger{border-color:var(--danger); color:var(--danger); background:transparent;}
+.btn.danger:hover{background:var(--danger-soft);}
+.btn.small{padding:5px 10px; font-size:.76rem;}
+.mt-tab{padding:8px 16px; font-size:.84rem;}
+.mt-tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+.mt-tab.active:hover{background:var(--accent-dark);}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+
+.toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;}
+.toolbar h3{margin:0; font-size:1rem;}
+.searchbox{
+  padding:8px 12px; border:1px solid var(--line); border-radius:7px; background:var(--surface); color:var(--ink);
+  font:inherit; font-size:.85rem; min-width:200px;
+}
+
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.form-grid.wide{grid-template-columns:1fr;}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr;}}
+.f{display:flex; flex-direction:column; gap:6px;}
+.f label{font-size:.78rem; color:var(--ink-soft);}
+.f input, .f select, .f textarea{
+  padding:9px 10px; border:1px solid var(--line); border-radius:7px; background:var(--field); color:var(--ink);
+  font:inherit; font-size:.88rem;
+}
+.f textarea{resize:vertical; min-height:60px;}
+
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(20,24,18,.45); display:none; align-items:center; justify-content:center;
+  padding:20px; z-index:50;
+}
+.modal-backdrop.active{display:flex;}
+.modal{
+  background:var(--surface); border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
+  padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.modal h3{margin:0 0 4px;}
+.modal .modal-sub{color:var(--ink-soft); font-size:.83rem; margin:0 0 18px;}
+.modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:20px;}
+
+.empty{padding:40px 20px; text-align:center; color:var(--ink-soft); font-size:.88rem;}
+
+.recipe-line{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.recipe-line select{flex:2;}
+.recipe-line input{flex:1;}
+
+.toast-stack{position:fixed; top:16px; right:16px; z-index:100; display:flex; flex-direction:column; gap:8px; top:calc(16px + env(safe-area-inset-top,0px));}
+.toast{
+  background:var(--accent-dark); color:#fff; padding:11px 16px; border-radius:8px; font-size:.85rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.18); max-width:320px; animation:toastin .18s ease;
+}
+.toast.danger{background:var(--danger);}
+@keyframes toastin{from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:none;}}
+
+.cart-item{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:.87rem;}
+.cart-item .qtybtns{display:flex; align-items:center; gap:6px;}
+.cart-item .qtybtns button{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:.8rem;line-height:1;}
+.cart-item{align-items:flex-start;}
+.cart-exclude{display:inline-block; margin-top:4px; font-size:.74rem; padding:2px 8px; border-radius:6px; background:#F4EBD3; color:#6B5A2E; border:1px solid #E2D3AA;}
+.cart-edit{background:none; border:none; color:var(--accent); font:inherit; font-size:.74rem; cursor:pointer; padding:0; margin-left:6px; text-decoration:underline;}
+.ing-opt{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:9px; margin-bottom:8px; cursor:pointer; background:var(--surface); transition:background .12s, border-color .12s;}
+.ing-opt:hover{border-color:var(--accent);}
+.ing-opt input{width:17px; height:17px; accent-color:var(--accent); flex:none; margin:0;}
+.ing-opt .io-name{flex:1; font-size:.88rem;}
+.ing-opt .io-qty{font-size:.76rem; color:var(--ink-soft); white-space:nowrap;}
+.ing-opt.off{background:#FBF8EF; border-style:dashed;}
+.ing-opt.off .io-name{text-decoration:line-through; color:var(--ink-soft);}
+.ing-opt.short{border-color:#D6C392;}
+.io-flag{font-size:.7rem; padding:1px 7px; border-radius:10px; background:#F4EBD3; color:#6B5A2E; white-space:nowrap;}
+.io-group{font-size:.74rem; color:var(--ink-soft); margin:12px 0 6px; font-weight:600;}
+.qty-stepper{display:flex; align-items:center; gap:8px;}
+.qty-stepper button{width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--field); cursor:pointer; font-size:1rem;}
+.qty-stepper span{min-width:28px; text-align:center; font-weight:600;}
+.deduct-box{margin-top:14px; border:1px solid #C6DCCD; background:#F1F6F1; border-radius:10px; padding:12px 14px;}
+.deduct-box .db-title{font-size:.82rem; font-weight:600; color:#1E4630; margin-bottom:8px;}
+.deduct-box table{font-size:.78rem;}
+.deduct-box td,.deduct-box th{padding:5px 6px;}
+.deduct-box th{background:transparent;}
+.menu-tile{
+  border:1px solid var(--line); border-radius:10px; padding:13px 14px; cursor:pointer; background:var(--surface);
+  transition:border-color .12s;
+}
+.menu-tile:hover{border-color:var(--accent);}
+.menu-tile.unavailable{opacity:.45; cursor:not-allowed;}
+.menu-tile .mname{font-weight:600; font-size:.92rem;}
+.menu-tile .mprice{color:var(--accent-dark); font-size:.85rem; margin-top:3px;}
+.menu-tile .mflag{font-size:.7rem; color:var(--danger); margin-top:4px;}
+.menu-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;}
+
+.scroll-x{overflow-x:auto;}
+.hint{font-size:.78rem; color:var(--ink-soft); margin-top:6px;}
+.divider{height:1px; background:var(--line); margin:18px 0;}
+.perm-note{
+  display:flex; gap:10px; padding:12px 14px; border-radius:8px; background:var(--warn-soft); color:var(--warn);
+  font-size:.83rem; align-items:flex-start; margin-bottom:16px;
+}
+
+.loading{position:fixed; inset:0; background:rgba(246,244,238,.55); z-index:90; display:none; align-items:center; justify-content:center;}
+.loading.active{display:flex;}
+.loading-box{display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 20px; box-shadow:var(--shadow); font-size:.88rem; color:var(--accent-dark); font-weight:500;}
+.spinner{width:20px; height:20px; border-radius:50%; border:3px solid #E2EEE5; border-top-color:var(--accent); animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.refresh-btn{display:flex; align-items:center; gap:6px; font-size:.78rem; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:var(--surface); color:var(--accent-dark); cursor:pointer; font:inherit; font-weight:500;}
+.refresh-btn:hover{border-color:var(--accent);}
+.refresh-btn svg{width:14px; height:14px;}
+.sync-note{font-size:.72rem; color:var(--ink-soft); text-align:center; margin-top:14px;}
+.sync-note b{color:var(--accent-dark);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-head">
+      <div class="login-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#2E6B4A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><circle cx="9.5" cy="11" r="1"/><circle cx="14.5" cy="11" r="1"/><circle cx="12" cy="15.5" r="1"/><path d="M12 5c1-2 3-2.5 5-2"/></svg></div>
+      <h1>ระบบสต็อกสินค้า</h1>
+      <p class="sub">ร้านมะพร้าวสองหนุ่ม</p>
+    </div>
+    <div class="login-body">
+      <div class="field">
+        <label for="loginUser">ชื่อผู้ใช้งาน (Username)</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+          <input id="loginUser" type="text" placeholder="Username (เช่น owner, staff)" autocomplete="username">
+        </div>
+      </div>
+      <div class="field">
+        <label for="loginPass">รหัสผ่าน (Password)</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input id="loginPass" type="password" placeholder="Password (เช่น 1234)" autocomplete="current-password">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span>เข้าสู่ระบบ</span>
+      </button>
+      <div class="login-error" id="loginError"></div>
+      <div class="sync-note">ข้อมูลทั้งหมดบันทึกใน <b>Google Sheet</b> ของร้าน</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+<div class="loading" id="loading"><div class="loading-box"><div class="spinner"></div><span id="loadingText">กำลังเชื่อมต่อ Google Sheet…</span></div></div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <div class="brand-name">ร้านมะพร้าวสองหนุ่ม</div>
+        <div class="brand-sub">ระบบจัดการสต็อกสินค้า</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">โมดูลระบบ</div>
+    <button class="navlink" data-mod="dashboard" onclick="showModule('dashboard')">
+      <span>ภาพรวม</span>
+    </button>
+    <button class="navlink" data-mod="master" onclick="showModule('master')">
+      <span>ข้อมูลหลัก</span>
+    </button>
+    <button class="navlink" data-mod="stockin" onclick="showModule('stockin')">
+      <span>รับสินค้าเข้าสต็อก</span>
+    </button>
+    <button class="navlink" data-mod="sales" onclick="showModule('sales')">
+      <span>บันทึกการขาย</span>
+    </button>
+    <button class="navlink" data-mod="waste" onclick="showModule('waste')">
+      <span>ของเสีย</span>
+    </button>
+    <button class="navlink" data-mod="reports" onclick="showModule('reports')">
+      <span>รายงาน &amp; แจ้งเตือน</span>
+    </button>
+    <button class="navlink" data-mod="users" onclick="showModule('users')">
+      <span>ประวัติการใช้งาน</span>
+    </button>
+
+    <div class="sidebar-foot">
+      <div class="who">
+        <div class="avatar" id="whoAvatar">?</div>
+        <div>
+          <div class="who-name" id="whoName">—</div>
+          <div class="who-role" id="whoRole">—</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="topbarTitle">ภาพรวม</h2>
+        <div class="desc" id="topbarDesc">สรุปสถานะร้านวันนี้</div>
+      </div>
+      <div class="btn-row">
+        <button class="refresh-btn" onclick="refreshData()" title="ดึงข้อมูลล่าสุดจาก Google Sheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>รีเฟรชข้อมูล</button>
+        <div class="alert-pill" id="topAlertLow" onclick="showModule('reports')" style="display:none;">
+          <span id="topAlertLowCount">0</span>&nbsp;รายการใกล้หมด
+        </div>
+        <div class="alert-pill danger" id="topAlertExp" onclick="showModule('reports')" style="display:none;">
+          <span id="topAlertExpCount">0</span>&nbsp;ล็อตใกล้หมดอายุ
+        </div>
+      </div>
+    </div>
+
+    <div class="content" id="contentArea">
+
+      <!-- DASHBOARD -->
+      <div class="panel" id="panel-dashboard">
+        <div class="grid-4" style="margin-bottom:20px;" id="dashStats"></div>
+        <div class="grid-2">
+          <div class="card card-pad acc acc-cream">
+            <div class="ct-row"><div class="ct-icon" data-icon="down"></div><div class="section-title">แจ้งเตือนสต็อกใกล้หมด</div></div>
+            <div class="section-sub">เทียบยอดคงเหลือกับจุดสั่งซื้อ (reorder point)</div>
+            <div id="dashLowStock"></div>
+          </div>
+          <div class="card card-pad acc acc-deep">
+            <div class="ct-row"><div class="ct-icon" data-icon="clock"></div><div class="section-title">ล็อตวัตถุดิบใกล้หมดอายุ</div></div>
+            <div class="section-sub">ภายใน 5 วันข้างหน้า — ควรใช้ก่อน (FEFO)</div>
+            <div id="dashExpiring"></div>
+          </div>
+        </div>
+        <div class="grid-2 gap-top">
+          <div class="card card-pad acc acc-light">
+            <div class="ct-row"><div class="ct-icon" data-icon="pie"></div><div class="section-title">สัดส่วนเมนูที่ขายวันนี้</div></div>
+            <div class="section-sub">นับจำนวนแก้วที่ขายได้แยกตามเมนู</div>
+            <div id="dashMenuMix"></div>
+          </div>
+          <div class="card card-pad acc acc-green">
+            <div class="ct-row"><div class="ct-icon" data-icon="receipt"></div><div class="section-title">ยอดขายล่าสุด</div></div>
+            <div class="section-sub">รายการขาย 8 บิลล่าสุด</div>
+            <div id="dashRecentSales"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE 2: MASTER DATA -->
+      <div class="panel" id="panel-master">
+        <div class="card card-pad">
+          <div class="toolbar" style="margin-bottom:0;">
+            <div class="btn-row" id="masterTabs">
+              <button class="btn small mt-tab active" data-tab="menu" onclick="setMasterTab('menu')">เมนู</button>
+              <button class="btn small mt-tab" data-tab="ingredients" onclick="setMasterTab('ingredients')">วัตถุดิบ/บรรจุภัณฑ์</button>
+              <button class="btn small mt-tab" data-tab="recipe" onclick="setMasterTab('recipe')">สูตรเมนู (BOM)</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="mt-menu" class="mt-panel" style="margin-top:16px;">
+          <div class="toolbar">
+            <h3>รายการเมนู</h3>
+            <div class="btn-row">
+              <input class="searchbox" id="menuSearch" placeholder="ค้นหาเมนู…" oninput="renderMenuTable()">
+              <button class="btn primary" onclick="openMenuModal()">+ เพิ่มเมนู</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>รหัส</th><th>ชื่อเมนู</th><th>หมวดหมู่</th><th>ราคา</th><th>สถานะ</th><th>สูตร</th><th></th></tr></thead>
+            <tbody id="menuTableBody"></tbody>
+          </table></div>
+        </div>
+
+        <div id="mt-ingredients" class="mt-panel" style="margin-top:16px; display:none;">
+          <div class="toolbar">
+            <h3>วัตถุดิบ &amp; บรรจุภัณฑ์</h3>
+            <div class="btn-row">
+              <input class="searchbox" id="ingSearch" placeholder="ค้นหาวัตถุดิบ…" oninput="renderIngredientTable()">
+              <button class="btn primary" onclick="openIngredientModal()">+ เพิ่มวัตถุดิบ</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>หน่วยซื้อ→ใช้</th><th>อัตราแปลง</th><th>คงเหลือ</th><th>จุดสั่งซื้อ</th><th>อายุเก็บ</th><th></th></tr></thead>
+            <tbody id="ingTableBody"></tbody>
+          </table></div>
+        </div>
+
+        <div id="mt-recipe" class="mt-panel" style="margin-top:16px; display:none;">
+          <div class="card card-pad">
+            <div class="section-title">กำหนดสูตรเมนู (Bill of Materials)</div>
+            <div class="section-sub">เลือกเมนู แล้วระบุวัตถุดิบและปริมาณที่ใช้ต่อ 1 ที่ — ระบบจะใช้ข้อมูลนี้ตัดสต็อกอัตโนมัติตอนขาย</div>
+            <div class="f" style="max-width:320px; margin-bottom:16px;">
+              <label>เลือกเมนู</label>
+              <select id="recipeMenuSelect" onchange="renderRecipeEditor()"></select>
+            </div>
+            <div id="recipeLines"></div>
+            <button class="btn small" onclick="addRecipeLine()">+ เพิ่มวัตถุดิบในสูตร</button>
+            <div class="divider"></div>
+            <button class="btn primary" onclick="saveRecipe()">บันทึกสูตร</button>
+            <span class="hint" id="recipeSaveHint"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE 3: STOCK IN -->
+      <div class="panel" id="panel-stockin">
+        <div class="grid-2">
+          <div class="card card-pad">
+            <div class="section-title">รับวัตถุดิบเข้าสต็อก</div>
+            <div class="section-sub">ระบุจำนวนตามหน่วยที่ซื้อ ระบบจะแปลงเป็นหน่วยใช้งานอัตโนมัติและสร้างล็อตใหม่</div>
+            <div class="form-grid">
+              <div class="f" style="grid-column:1/-1;">
+                <label>วัตถุดิบ / บรรจุภัณฑ์</label>
+                <select id="siIngredient" onchange="updateStockInHint()"></select>
+              </div>
+              <div class="f">
+                <label>จำนวน (หน่วยซื้อ)</label>
+                <input type="number" id="siQtyPurchase" min="0" step="0.01" oninput="updateStockInHint()">
+              </div>
+              <div class="f">
+                <label>วันที่รับเข้า</label>
+                <input type="date" id="siReceivedDate">
+              </div>
+              <div class="f">
+                <label>วันหมดอายุ</label>
+                <input type="date" id="siExpireDate">
+              </div>
+              <div class="f">
+                <label>คำนวณอัตโนมัติจากอายุเก็บ</label>
+                <button class="btn small" onclick="autoExpireDate()" type="button">ใช้อายุเก็บของวัตถุดิบ</button>
+              </div>
+            </div>
+            <div class="hint" id="stockInHint"></div>
+            <div class="divider"></div>
+            <button class="btn primary" onclick="submitStockIn()">บันทึกรับเข้าสต็อก</button>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">ประวัติการรับเข้าล่าสุด</div>
+            <div class="section-sub">tbl_receiving_history</div>
+            <div id="receivingHistoryList"></div>
+          </div>
+        </div>
+
+        <div class="card card-pad" style="margin-top:20px;">
+          <div class="toolbar">
+            <h3>ล็อตสินค้าคงเหลือทั้งหมด (FEFO)</h3>
+            <input class="searchbox" id="lotSearch" placeholder="ค้นหาวัตถุดิบ…" oninput="renderLotTable()">
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ล็อต</th><th>วัตถุดิบ</th><th>คงเหลือ</th><th>รับเข้า</th><th>หมดอายุ</th><th>สถานะ</th></tr></thead>
+            <tbody id="lotTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- MODULE 4: SALES -->
+      <div class="panel" id="panel-sales">
+        <div class="grid-2">
+          <div class="card card-pad">
+            <div class="section-title">เลือกเมนู</div>
+            <div class="section-sub">กดเมนูเพื่อเลือกวัตถุดิบที่ไม่ใส่ (ดึงจากสูตรเมนู D4) — ระบบจะตัดเฉพาะวัตถุดิบที่ใช้จริงออกจากล็อต</div>
+            <div class="menu-grid" id="posMenuGrid"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">รายการขายปัจจุบัน</div>
+            <div id="cartItems"></div>
+            <div class="empty" id="cartEmpty">ยังไม่มีรายการ — เลือกเมนูจากด้านซ้าย</div>
+            <div class="divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:600; font-size:1.05rem;">
+              <span>ยอดรวม</span><span id="cartTotal">฿0.00</span>
+            </div>
+            <button class="btn primary" style="width:100%; margin-top:14px;" onclick="checkout()">บันทึกการขาย &amp; ตัดสต็อก</button>
+            <div class="hint" id="checkoutHint"></div>
+            <div id="deductSummary"></div>
+          </div>
+        </div>
+        <div class="card card-pad" style="margin-top:20px;">
+          <div class="section-title">ประวัติการขายล่าสุด</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>บิล</th><th>เวลา</th><th>พนักงาน</th><th>รายการ</th><th>ยอดรวม</th></tr></thead>
+            <tbody id="salesHistoryBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- MODULE 5: WASTE -->
+      <div class="panel" id="panel-waste">
+        <div class="grid-2">
+          <div class="card card-pad">
+            <div class="section-title">บันทึกของเสีย / วัตถุดิบหมดอายุ</div>
+            <div class="section-sub">ระบบจะตัดยอดคงเหลือออกจากล็อตทันที</div>
+            <div class="form-grid">
+              <div class="f" style="grid-column:1/-1;">
+                <label>วัตถุดิบ</label>
+                <select id="wasteIngredient" onchange="renderWasteLotOptions()"></select>
+              </div>
+              <div class="f" style="grid-column:1/-1;">
+                <label>ล็อต (ถ้าระบุได้)</label>
+                <select id="wasteLot"></select>
+              </div>
+              <div class="f">
+                <label>จำนวนที่เสีย (หน่วยใช้งาน)</label>
+                <input type="number" id="wasteQty" min="0" step="0.01">
+              </div>
+              <div class="f">
+                <label>เหตุผล</label>
+                <select id="wasteReason">
+                  <option>หมดอายุ</option>
+                  <option>ทำตก/เสียหาย</option>
+                  <option>คุณภาพไม่ผ่าน</option>
+                  <option>ปนเปื้อน</option>
+                  <option>อื่นๆ</option>
+                </select>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <button class="btn primary" onclick="submitWaste()">บันทึกของเสีย</button>
+            <div class="hint" id="wasteHint"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">ประวัติของเสีย</div>
+            <div id="wasteHistoryList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE 6: REPORTS -->
+      <div class="panel" id="panel-reports">
+        <div class="grid-4" style="margin-bottom:20px;" id="reportStats"></div>
+
+        <div class="grid-2">
+          <div class="card card-pad acc acc-cream">
+            <div class="ct-row"><div class="ct-icon" data-icon="alert"></div><div class="section-title">แจ้งเตือนสต็อกใกล้หมด</div></div>
+            <div class="section-sub">รวมคงเหลือทุกล็อตต่อวัตถุดิบ เทียบ reorder point</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>วัตถุดิบ</th><th>คงเหลือ</th><th>จุดสั่งซื้อ</th><th>สถานะ</th></tr></thead>
+              <tbody id="reportLowStockBody"></tbody>
+            </table></div>
+          </div>
+          <div class="card card-pad acc acc-deep">
+            <div class="ct-row"><div class="ct-icon" data-icon="calendar"></div><div class="section-title">แจ้งเตือนใกล้หมดอายุ</div></div>
+            <div class="section-sub">ล็อตที่จะหมดอายุภายใน 7 วัน</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>วัตถุดิบ</th><th>ล็อต</th><th>คงเหลือ</th><th>หมดอายุ</th></tr></thead>
+              <tbody id="reportExpBody"></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="card card-pad acc acc-green gap-top">
+          <div class="ct-row"><div class="ct-icon" data-icon="box"></div><div class="section-title">ระดับสต็อกวัตถุดิบทั้งหมด</div></div>
+          <div class="section-sub">แถบสีบอกสถานะ: เขียว = ปกติ · ครีม = ใกล้หมด · ครีมเข้ม = หมด (เต็มแถบ = 3 เท่าของจุดสั่งซื้อ)</div>
+          <div class="grid-2" id="reportStockLevels" style="gap:4px 28px;"></div>
+        </div>
+
+        <div class="grid-2 gap-top">
+          <div class="card card-pad acc acc-green">
+            <div class="ct-row"><div class="ct-icon" data-icon="trophy"></div><div class="section-title">เมนูขายดี</div></div>
+            <div class="section-sub">จัดอันดับจาก tbl_sales_detail</div>
+            <div id="reportTopMenu"></div>
+          </div>
+          <div class="card card-pad acc acc-light">
+            <div class="ct-row"><div class="ct-icon" data-icon="trash"></div><div class="section-title">ของเสียแยกตามสาเหตุ</div></div>
+            <div class="section-sub">สรุปจาก tbl_waste_record</div>
+            <div id="reportWaste"></div>
+          </div>
+        </div>
+
+        <div class="card card-pad acc acc-green gap-top">
+          <div class="ct-row"><div class="ct-icon" data-icon="coin"></div><div class="section-title">สรุปรายได้</div></div>
+          <div class="section-sub">รายได้จาก tbl_sales</div>
+          <div id="reportProfit"></div>
+        </div>
+      </div>
+
+      <!-- MODULE 1: USAGE HISTORY -->
+      <div class="panel" id="panel-users">
+        <div class="card card-pad">
+          <div class="toolbar">
+            <h3>ประวัติการใช้งานระบบ</h3>
+          </div>
+          <div class="section-sub" style="margin-top:-8px;">tbl_login_history ผูกกับ tbl_users — บันทึกทุกครั้งที่มีการเข้า/ออกจากระบบ</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th>เข้าระบบ (วัน/เวลา)</th><th>ออกจากระบบ (วัน/เวลา)</th></tr></thead>
+            <tbody id="loginHistoryBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Generic Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* =========================================================
+   IN-MEMORY "DATABASE" — mirrors D1–D11 tables from the DFD
+   (kept in JS memory only; no browser storage per environment rules)
+========================================================= */
+/* =========================================================
+   GOOGLE SHEETS CONNECTION
+   ใส่ URL ของ Web App ที่ได้จากการ Deploy Apps Script ตรงนี้
+========================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwmJRZedo5qfo_L98h9O6prwtS7cXkF9e_TJpHZr5i0QJwSuccHLkn_YvfpOVPS7u2p/exec';
+
+// ข้อมูลทุกตารางจะถูกโหลดมาจาก Google Sheet หลัง login
+const db = {
+  users: [], menu: [], ingredients: [], recipe: [], stock_lot: [],
+  sales: [], sales_detail: [], receiving_history: [], waste_record: [], login_history: [],
+};
+let sessionToken = null;
+let busyCount = 0;
+
+function setBusy(on, text){
+  busyCount += on ? 1 : -1;
+  if(busyCount<0) busyCount = 0;
+  if(text) document.getElementById('loadingText').textContent = text;
+  document.getElementById('loading').classList.toggle('active', busyCount>0);
+}
+
+// เรียก API บน Apps Script (POST แบบ text/plain เพื่อไม่ติด CORS preflight)
+async function api(action, payload, loadingText){
+  if(!API_URL || API_URL.indexOf('PASTE_')===0) throw new Error('ยังไม่ได้ใส่ API_URL ของ Apps Script ในไฟล์ HTML');
+  setBusy(true, loadingText || 'กำลังบันทึกลง Google Sheet…');
+  try{
+    const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({action, payload: payload||{}, token: sessionToken}) });
+    const data = await res.json();
+    if(!data.ok){
+      if(data.error==='SESSION_EXPIRED'){ forceLogout('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่'); }
+      throw new Error(data.error==='SESSION_EXPIRED' ? 'หมดเวลาการใช้งาน' : data.error);
+    }
+    if(data.db) applyDb(data.db);
+    return data;
+  } catch(e){
+    if(e instanceof TypeError) throw new Error('เชื่อมต่อ Google Sheet ไม่ได้ — ตรวจอินเทอร์เน็ตหรือ API_URL');
+    throw e;
+  } finally {
+    setBusy(false);
+  }
+}
+
+// แปลงค่าจากชีตให้เป็นชนิดข้อมูลที่ถูกต้อง
+const NUMERIC_FIELDS = ['user_id','menu_id','ingredient_id','recipe_id','lot_id','sale_id','sales_detail_id','receiving_id','waste_id','log_id',
+  'price','conversion_rate','reorder_point','shelf_life_days','quantity_used','quantity_remaining','total_amount','quantity','subtotal',
+  'received_qty_purchase_unit','received_qty_usage_unit','received_by','quantity_wasted','recorded_by'];
+function applyDb(data){
+  Object.keys(db).forEach(key=>{
+    db[key] = (data[key]||[]).map(row=>{
+      const o = {...row};
+      NUMERIC_FIELDS.forEach(f=>{ if(f in o && o[f]!=='' && o[f]!==null) o[f] = Number(o[f]); });
+      if(o.lot_id==='') o.lot_id = null;
+      if(o.logout_time==='') o.logout_time = null;
+      if('excluded_ingredients' in o && !Array.isArray(o.excluded_ingredients)) o.excluded_ingredients = [];
+      return o;
+    });
+  });
+  // เรียงรายการใหม่ขึ้นก่อน สำหรับตารางประวัติ
+  const desc = (f)=>(a,b)=>b[f]-a[f];
+  db.login_history.sort(desc('log_id'));
+  db.receiving_history.sort(desc('receiving_id'));
+  db.waste_record.sort(desc('waste_id'));
+}
+
+function rerenderCurrent(){
+  const active = document.querySelector('.panel.active');
+  if(active) renderModule(active.id.replace('panel-',''));
+  updateTopAlerts();
+}
+async function refreshData(){
+  try{ await api('loadAll', {}, 'กำลังดึงข้อมูลล่าสุด…'); rerenderCurrent(); toast('อัปเดตข้อมูลจาก Google Sheet แล้ว'); }
+  catch(e){ toast(e.message,'danger'); }
+}
+
+function todayISO(offsetDays=0){
+  const d = new Date();
+  d.setDate(d.getDate()+offsetDays);
+  return d.toISOString().slice(0,10);
+}
+
+/* =========================================================
+   AUTH
+========================================================= */
+let currentUser = null;
+
+async function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  if(!u || !p){ err.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; return; }
+  err.textContent = '';
+  try{
+    const res = await api('login', {username:u, password:p}, 'กำลังเข้าสู่ระบบ…');
+    sessionToken = res.token;
+    currentUser = res.user;
+    enterApp();
+  } catch(e){ err.textContent = e.message; }
+}
+async function doLogout(){
+  try{ await api('logout', {}, 'กำลังออกจากระบบ…'); } catch(e){ /* ออกจากหน้าจอต่อแม้บันทึกไม่สำเร็จ */ }
+  forceLogout();
+}
+function forceLogout(msg){
+  sessionToken = null;
+  currentUser = null;
+  cart = [];
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value=''; document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent = msg || '';
+}
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('active');
+  document.getElementById('whoName').textContent = currentUser.full_name;
+  document.getElementById('whoRole').textContent = currentUser.role==='owner' ? 'เจ้าของร้าน' : 'พนักงาน';
+  document.getElementById('whoAvatar').textContent = currentUser.full_name.slice(0,1);
+  applyPermissions();
+  showModule('dashboard');
+  renderAll();
+}
+function applyPermissions(){
+  const ownerOnly = ['master'];
+  const employeeOnly = ['sales','waste'];
+  document.querySelectorAll('.navlink').forEach(el=>{
+    const m = el.dataset.mod;
+    let visible = true;
+    if(ownerOnly.includes(m) && currentUser.role!=='owner') visible = false;
+    if(employeeOnly.includes(m) && currentUser.role==='owner') visible = false;
+    el.style.display = visible ? 'flex' : 'none';
+  });
+}
+
+/* =========================================================
+   NAV
+========================================================= */
+const moduleMeta = {
+  dashboard:{title:'ภาพรวม', desc:'สรุปสถานะร้านวันนี้'},
+  master:{title:'ข้อมูลหลัก', desc:'จัดการเมนู วัตถุดิบ และสูตรเมนู (Module 2)'},
+  stockin:{title:'รับสินค้าเข้าสต็อก', desc:'บันทึกวัตถุดิบที่รับเข้า พร้อมแปลงหน่วย (Module 3)'},
+  sales:{title:'บันทึกการขาย', desc:'ขายเมนู ระบบตัดสต็อกอัตโนมัติตามสูตร (Module 4)'},
+  waste:{title:'ของเสียและตัดสต็อก', desc:'บันทึกวัตถุดิบเสีย/หมดอายุ (Module 5)'},
+  reports:{title:'รายงาน & แจ้งเตือน', desc:'สต็อกใกล้หมด วันหมดอายุ ยอดขาย ต้นทุน (Module 6)'},
+  users:{title:'ประวัติการใช้งาน', desc:'ประวัติการเข้า-ออกระบบของผู้ใช้งานทุกคน (Module 1)'},
+};
+function showModule(mod){
+  if(mod==='master' && currentUser.role!=='owner'){ toast('เฉพาะเจ้าของร้านเท่านั้นที่เข้าถึงส่วนนี้ได้','danger'); return; }
+  if((mod==='sales'||mod==='waste') && currentUser.role==='owner'){ toast('ส่วนนี้สำหรับพนักงานเท่านั้น','danger'); return; }
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+mod).classList.add('active');
+  document.querySelectorAll('.navlink').forEach(n=>n.classList.toggle('active', n.dataset.mod===mod));
+  document.getElementById('topbarTitle').textContent = moduleMeta[mod].title;
+  document.getElementById('topbarDesc').textContent = moduleMeta[mod].desc;
+  renderModule(mod);
+}
+function renderModule(mod){
+  if(mod==='dashboard') renderDashboard();
+  if(mod==='master'){ renderMenuTable(); renderIngredientTable(); renderRecipeMenuSelect(); }
+  if(mod==='stockin'){ renderStockInSelect(); renderLotTable(); renderReceivingHistory(); }
+  if(mod==='sales'){ renderPosMenu(); renderCart(); renderSalesHistory(); }
+  if(mod==='waste'){ renderWasteIngredientSelect(); renderWasteHistory(); }
+  if(mod==='reports') renderReports();
+  if(mod==='users'){ renderLoginHistory(); }
+}
+function renderAll(){ renderModule('dashboard'); updateTopAlerts(); }
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function fmt(n){ return Number(n).toLocaleString('th-TH',{minimumFractionDigits:0, maximumFractionDigits:2}); }
+function money(n){ return '฿'+Number(n).toLocaleString('th-TH',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function daysUntil(dateStr){
+  const d = new Date(dateStr+'T00:00:00'); const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d-t)/86400000);
+}
+function stockRemaining(ingredient_id){
+  return db.stock_lot.filter(l=>l.ingredient_id===ingredient_id).reduce((s,l)=>s+l.quantity_remaining,0);
+}
+function ingName(id){ const i = db.ingredients.find(x=>x.ingredient_id===id); return i?i.ingredient_name:'—'; }
+function menuName(id){ const m = db.menu.find(x=>x.menu_id===id); return m?m.menu_name:'—'; }
+function userName(id){ const u = db.users.find(x=>x.user_id===id); return u?u.full_name:'—'; }
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+function toast(msg, kind){
+  const el = document.createElement('div');
+  el.className = 'toast'+(kind==='danger'?' danger':'');
+  el.textContent = msg;
+  document.getElementById('toastStack').appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+function lowStockList(){
+  return db.ingredients.map(i=>({...i, remaining: stockRemaining(i.ingredient_id)}))
+    .filter(i=>i.remaining <= i.reorder_point);
+}
+function expiringLots(days=7){
+  return db.stock_lot.filter(l=>l.quantity_remaining>0 && daysUntil(l.expire_date)<=days)
+    .sort((a,b)=>a.expire_date.localeCompare(b.expire_date));
+}
+function updateTopAlerts(){
+  const low = lowStockList();
+  const exp = expiringLots(5);
+  const lowEl = document.getElementById('topAlertLow');
+  const expEl = document.getElementById('topAlertExp');
+  document.getElementById('topAlertLowCount').textContent = low.length;
+  document.getElementById('topAlertExpCount').textContent = exp.length;
+  lowEl.style.display = low.length? 'flex':'none';
+  expEl.style.display = exp.length? 'flex':'none';
+}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+const PALETTE=['#1E4630','#2E6B4A','#4A8C66','#7DB592','#A9CFB4','#D6C392','#EBDFBF','#B9A774'];
+const ICONS={
+  cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10v4M18 10v4"/>',
+  cup:'<path d="M6 8h12l-1.5 12h-9z"/><path d="M5 8h14"/><path d="M12 8l2-5h3"/>',
+  down:'<path d="M3 7l6 6 4-4 8 8"/><path d="M21 11v6h-6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  receipt:'<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+  pie:'<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  chart:'<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"/>',
+  box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/>',
+  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  coin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9H11a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9.5M12 7v2M12 15v2"/>',
+  calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h1M12 12h1M15 12h1M8 16h1M12 16h1M15 16h1"/>',
+  bell:'<path d="M6 9a6 6 0 0 1 12 0c0 6 3 8 3 8H3s3-2 3-8"/><path d="M10 21h4"/>',
+  leaf:'<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19l7-7"/>'
+};
+function ic(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||''}</svg>`; }
+function applyCardIcons(){ document.querySelectorAll('.ct-icon[data-icon]').forEach(e=>{ e.innerHTML = ic(e.dataset.icon); }); }
+function statCard(cls, icon, label, value, foot){
+  return `<div class="stat-fancy ${cls}"><div class="sf-icon">${ic(icon)}</div><div class="sf-label">${label}</div><div class="sf-value">${value}</div>${foot?`<div class="sf-foot">${foot}</div>`:''}</div>`;
+}
+function allGood(msg){ return `<div class="all-good">${ic('check')}${msg}</div>`; }
+function stockColor(i){ return i.remaining<=0 ? '#B9A774' : (i.remaining<=i.reorder_point ? '#D6C392' : '#4A8C66'); }
+function stockBarHTML(i){
+  const cap = Math.max(i.reorder_point*3, 1);
+  const pct = Math.max(2, Math.min(100, i.remaining/cap*100));
+  const color = stockColor(i);
+  return `<div class="bar-row">
+    <div class="bar-top"><span><span class="dot-i" style="background:${color}"></span>${i.ingredient_name}</span>
+    <span class="muted">${fmt(i.remaining)} / ${fmt(i.reorder_point)} ${i.usage_unit}</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${color};"></div></div>
+  </div>`;
+}
+function expChip(days){
+  if(days<0) return `<span class="chip c-deep">หมดอายุแล้ว</span>`;
+  if(days<=2) return `<span class="chip c-cream">อีก ${days} วัน</span>`;
+  return `<span class="chip c-mid">อีก ${days} วัน</span>`;
+}
+function expBorder(days){ return days<0 ? '#1E4630' : days<=2 ? '#D6C392' : '#7DB592'; }
+function menuMixFor(saleIds){
+  const map={};
+  db.sales_detail.filter(d=>saleIds.includes(d.sale_id)).forEach(d=>{ map[d.menu_id]=(map[d.menu_id]||0)+d.quantity; });
+  return Object.entries(map).map(([id,q])=>({id:parseInt(id), qty:q})).sort((a,b)=>b.qty-a.qty);
+}
+function donutHTML(items, centerLabel){
+  const total = items.reduce((s,x)=>s+x.value,0);
+  let acc=0; const stops=[];
+  items.forEach(x=>{ const a=acc/total*360; acc+=x.value; const b=acc/total*360; stops.push(`${x.color} ${a}deg ${b}deg`); });
+  return `<div class="donut-wrap">
+    <div class="donut" style="background:conic-gradient(${stops.join(',')});"><div class="donut-center"><b>${fmt(total)}</b>${centerLabel}</div></div>
+    <div class="legend">${items.map(x=>`<div class="legend-row"><span><span class="dot-i" style="background:${x.color}"></span>${x.label}</span><b>${fmt(x.value)}</b></div>`).join('')}</div>
+  </div>`;
+}
+function renderDashboard(){
+  applyCardIcons();
+  const low = lowStockList();
+  const exp = expiringLots(5);
+  const todaySales = db.sales.filter(s=>s.sale_datetime.slice(0,10)===todayISO());
+  const todayTotal = todaySales.reduce((s,x)=>s+x.total_amount,0);
+  const todayCups = db.sales_detail.filter(d=>todaySales.some(s=>s.sale_id===d.sale_id)).reduce((s,d)=>s+d.quantity,0);
+
+  document.getElementById('dashStats').innerHTML =
+    statCard('g-deep','cash','ยอดขายวันนี้', money(todayTotal), `${todaySales.length} บิล`) +
+    statCard('g-mid','cup','จำนวนแก้วที่ขายวันนี้', `${todayCups} แก้ว`, 'รวมทุกเมนู') +
+    statCard('g-cream','down','วัตถุดิบใกล้หมด', `${low.length} รายการ`, low.length?'ควรสั่งซื้อเพิ่ม':'อยู่ในระดับปกติ') +
+    statCard('g-white','clock','ล็อตใกล้หมดอายุ', `${exp.length} ล็อต`, 'ภายใน 5 วัน');
+
+  document.getElementById('dashLowStock').innerHTML = low.length
+    ? low.map(i=>stockBarHTML(i)).join('') : allGood('ไม่มีวัตถุดิบใกล้หมด');
+
+  document.getElementById('dashExpiring').innerHTML = exp.length
+    ? exp.map(l=>{ const d=daysUntil(l.expire_date);
+        const ing=db.ingredients.find(x=>x.ingredient_id===l.ingredient_id);
+        return `<div class="exp-item" style="border-left-color:${expBorder(d)}"><div><div class="en">${ingName(l.ingredient_id)}</div><div class="es">ล็อต #${l.lot_id} · คงเหลือ ${fmt(l.quantity_remaining)} ${ing?ing.usage_unit:''}</div></div>${expChip(d)}</div>`; }).join('')
+    : allGood('ไม่มีล็อตใกล้หมดอายุ');
+
+  const mix = menuMixFor(todaySales.map(s=>s.sale_id));
+  document.getElementById('dashMenuMix').innerHTML = mix.length
+    ? donutHTML(mix.map((m,i)=>({label:menuName(m.id), value:m.qty, color:PALETTE[i%PALETTE.length]})), 'แก้ว')
+    : `<div class="empty">ยังไม่มีการขายวันนี้</div>`;
+
+  const recent = [...db.sales].sort((a,b)=>b.sale_datetime.localeCompare(a.sale_datetime)).slice(0,8);
+  document.getElementById('dashRecentSales').innerHTML = recent.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>บิล</th><th>เวลา</th><th>พนักงาน</th><th>ยอดรวม</th></tr></thead>
+    <tbody>${recent.map(s=>`<tr><td><span class="bill-chip">#${s.sale_id}</span></td><td>${fmtDateTime(s.sale_datetime)}</td><td>${userName(s.user_id)}</td><td class="money-strong">${money(s.total_amount)}</td></tr>`).join('')}</tbody>
+  </table></div>` : `<div class="empty">ยังไม่มีการขาย</div>`;
+
+  updateTopAlerts();
+}
+
+/* =========================================================
+   MODULE 2: MASTER DATA — menu
+========================================================= */
+let masterTab = 'menu';
+function setMasterTab(tab){
+  masterTab = tab;
+  document.querySelectorAll('.mt-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.mt-panel').forEach(p=>p.style.display='none');
+  document.getElementById('mt-'+tab).style.display='block';
+  if(tab==='recipe') renderRecipeMenuSelect();
+}
+function renderMenuTable(){
+  const q = (document.getElementById('menuSearch').value||'').toLowerCase();
+  const rows = db.menu.filter(m=>m.menu_name.toLowerCase().includes(q));
+  document.getElementById('menuTableBody').innerHTML = rows.length ? rows.map(m=>{
+    const rc = db.recipe.filter(r=>r.menu_id===m.menu_id).length;
+    return `<tr>
+      <td>#${m.menu_id}</td><td>${m.menu_name}</td><td>${m.category}</td><td>${money(m.price)}</td>
+      <td>${m.status==='active'?'<span class="tag ok">เปิดขาย</span>':'<span class="tag muted">ปิด</span>'}</td>
+      <td>${rc? '<span class="tag ok">'+rc+' วัตถุดิบ</span>' : '<span class="tag warn">ยังไม่ตั้งสูตร</span>'}</td>
+      <td class="btn-row"><button class="btn small" onclick="openMenuModal(${m.menu_id})">แก้ไข</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7"><div class="empty">ไม่พบเมนู</div></td></tr>`;
+}
+function openMenuModal(id){
+  const editing = !!id;
+  const m = editing ? db.menu.find(x=>x.menu_id===id) : {menu_name:'', price:'', category:'', status:'active'};
+  renderModal(`
+    <h3>${editing?'แก้ไขเมนู':'เพิ่มเมนูใหม่'}</h3>
+    <p class="modal-sub">ข้อมูลนี้จะถูกบันทึกลง tbl_menu</p>
+    <div class="form-grid">
+      <div class="f" style="grid-column:1/-1;"><label>ชื่อเมนู</label><input id="fMenuName" value="${m.menu_name}"></div>
+      <div class="f"><label>หมวดหมู่</label><input id="fMenuCat" value="${m.category}" placeholder="น้ำมะพร้าว / มะพร้าวปั่น"></div>
+      <div class="f"><label>ราคาขาย (บาท)</label><input id="fMenuPrice" type="number" step="0.01" value="${m.price}"></div>
+      <div class="f"><label>สถานะ</label>
+        <select id="fMenuStatus"><option value="active" ${m.status==='active'?'selected':''}>เปิดขาย</option><option value="inactive" ${m.status==='inactive'?'selected':''}>ปิดขาย</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      ${editing?'<button class="btn danger" onclick="deleteMenu('+id+')">ลบเมนู</button>':''}
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn primary" onclick="saveMenu(${editing?id:'null'})">บันทึก</button>
+    </div>
+  `);
+}
+async function saveMenu(id){
+  const payload = {
+    menu_id: id || null,
+    menu_name: document.getElementById('fMenuName').value.trim(),
+    category: document.getElementById('fMenuCat').value.trim() || 'ทั่วไป',
+    price: parseFloat(document.getElementById('fMenuPrice').value)||0,
+    status: document.getElementById('fMenuStatus').value,
+  };
+  if(!payload.menu_name){ toast('กรุณาระบุชื่อเมนู','danger'); return; }
+  try{
+    await api('saveMenu', payload);
+    toast(id ? 'บันทึกการแก้ไขเมนูแล้ว' : 'เพิ่มเมนูใหม่แล้ว');
+    closeModal(); renderMenuTable(); renderRecipeMenuSelect(); renderPosMenu();
+  } catch(e){ toast(e.message,'danger'); }
+}
+async function deleteMenu(id){
+  try{
+    await api('deleteMenu', {menu_id:id});
+    closeModal(); renderMenuTable(); renderRecipeMenuSelect(); renderPosMenu();
+    toast('ลบเมนูแล้ว');
+  } catch(e){ toast(e.message,'danger'); }
+}
+
+/* ---- ingredients ---- */
+function renderIngredientTable(){
+  const q = (document.getElementById('ingSearch').value||'').toLowerCase();
+  const rows = db.ingredients.filter(i=>i.ingredient_name.toLowerCase().includes(q));
+  document.getElementById('ingTableBody').innerHTML = rows.length ? rows.map(i=>{
+    const rem = stockRemaining(i.ingredient_id);
+    const low = rem <= i.reorder_point;
+    return `<tr>
+      <td>#${i.ingredient_id}</td><td>${i.ingredient_name}</td>
+      <td>${i.type==='raw_material'?'วัตถุดิบ':'บรรจุภัณฑ์'}</td>
+      <td>${i.purchase_unit} → ${i.usage_unit}</td>
+      <td>${fmt(i.conversion_rate)}</td>
+      <td>${low?'<span class="tag warn">':'<span class="tag ok">'}${fmt(rem)} ${i.usage_unit}</span></td>
+      <td>${fmt(i.reorder_point)} ${i.usage_unit}</td>
+      <td>${i.shelf_life_days} วัน</td>
+      <td><button class="btn small" onclick="openIngredientModal(${i.ingredient_id})">แก้ไข</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9"><div class="empty">ไม่พบวัตถุดิบ</div></td></tr>`;
+}
+function openIngredientModal(id){
+  const editing = !!id;
+  const i = editing? db.ingredients.find(x=>x.ingredient_id===id) : {ingredient_name:'',type:'raw_material',purchase_unit:'',usage_unit:'',conversion_rate:'',reorder_point:'',shelf_life_days:''};
+  renderModal(`
+    <h3>${editing?'แก้ไขวัตถุดิบ':'เพิ่มวัตถุดิบ/บรรจุภัณฑ์'}</h3>
+    <p class="modal-sub">ข้อมูลนี้จะถูกบันทึกลง tbl_ingredients</p>
+    <div class="form-grid">
+      <div class="f" style="grid-column:1/-1;"><label>ชื่อวัตถุดิบ</label><input id="fIngName" value="${i.ingredient_name}"></div>
+      <div class="f"><label>ประเภท</label>
+        <select id="fIngType"><option value="raw_material" ${i.type==='raw_material'?'selected':''}>วัตถุดิบ</option><option value="packaging" ${i.type==='packaging'?'selected':''}>บรรจุภัณฑ์</option></select>
+      </div>
+      <div class="f"><label>อายุเก็บ (วัน)</label><input id="fIngShelf" type="number" value="${i.shelf_life_days}"></div>
+      <div class="f"><label>หน่วยที่ซื้อ</label><input id="fIngPU" value="${i.purchase_unit}" placeholder="เช่น ถุง, ลัง"></div>
+      <div class="f"><label>หน่วยที่ใช้จริง</label><input id="fIngUU" value="${i.usage_unit}" placeholder="เช่น กรัม, มล., ชิ้น"></div>
+      <div class="f"><label>อัตราแปลง (ซื้อ→ใช้)</label><input id="fIngRate" type="number" step="0.0001" value="${i.conversion_rate}"></div>
+      <div class="f"><label>จุดแจ้งเตือนสต็อกต่ำ (หน่วยใช้)</label><input id="fIngReorder" type="number" step="0.01" value="${i.reorder_point}"></div>
+    </div>
+    <div class="modal-actions">
+      ${editing?'<button class="btn danger" onclick="deleteIngredient('+id+')">ลบ</button>':''}
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn primary" onclick="saveIngredient(${editing?id:'null'})">บันทึก</button>
+    </div>
+  `);
+}
+async function saveIngredient(id){
+  const data = {
+    ingredient_id: id || null,
+    ingredient_name: document.getElementById('fIngName').value.trim(),
+    type: document.getElementById('fIngType').value,
+    shelf_life_days: parseInt(document.getElementById('fIngShelf').value)||0,
+    purchase_unit: document.getElementById('fIngPU').value.trim(),
+    usage_unit: document.getElementById('fIngUU').value.trim(),
+    conversion_rate: parseFloat(document.getElementById('fIngRate').value)||1,
+    reorder_point: parseFloat(document.getElementById('fIngReorder').value)||0,
+  };
+  if(!data.ingredient_name){ toast('กรุณาระบุชื่อวัตถุดิบ','danger'); return; }
+  try{
+    await api('saveIngredient', data);
+    toast(id ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มวัตถุดิบใหม่แล้ว');
+    closeModal(); renderIngredientTable(); renderStockInSelect(); renderWasteIngredientSelect();
+  } catch(e){ toast(e.message,'danger'); }
+}
+async function deleteIngredient(id){
+  try{
+    await api('deleteIngredient', {ingredient_id:id});
+    closeModal(); renderIngredientTable(); renderStockInSelect(); renderWasteIngredientSelect();
+    toast('ลบวัตถุดิบแล้ว');
+  } catch(e){ toast(e.message,'danger'); }
+}
+
+/* ---- recipe / BOM ---- */
+function renderRecipeMenuSelect(){
+  const sel = document.getElementById('recipeMenuSelect');
+  const cur = sel.value;
+  sel.innerHTML = db.menu.map(m=>`<option value="${m.menu_id}">${m.menu_name}</option>`).join('');
+  if(cur && db.menu.some(m=>String(m.menu_id)===cur)) sel.value = cur;
+  renderRecipeEditor();
+}
+let recipeDraft = [];
+function renderRecipeEditor(){
+  const menuId = parseInt(document.getElementById('recipeMenuSelect').value);
+  recipeDraft = db.recipe.filter(r=>r.menu_id===menuId).map(r=>({ingredient_id:r.ingredient_id, quantity_used:r.quantity_used}));
+  if(recipeDraft.length===0) recipeDraft.push({ingredient_id:'', quantity_used:''});
+  document.getElementById('recipeSaveHint').textContent='';
+  drawRecipeLines();
+}
+function drawRecipeLines(){
+  const wrap = document.getElementById('recipeLines');
+  wrap.innerHTML = recipeDraft.map((line,idx)=>`
+    <div class="recipe-line">
+      <select onchange="recipeDraft[${idx}].ingredient_id=parseInt(this.value)">
+        <option value="">— เลือกวัตถุดิบ —</option>
+        ${db.ingredients.map(i=>`<option value="${i.ingredient_id}" ${line.ingredient_id===i.ingredient_id?'selected':''}>${i.ingredient_name} (${i.usage_unit})</option>`).join('')}
+      </select>
+      <input type="number" step="0.01" placeholder="ปริมาณ/ที่" value="${line.quantity_used}" oninput="recipeDraft[${idx}].quantity_used=parseFloat(this.value)||0">
+      <button class="btn small danger" onclick="removeRecipeLine(${idx})" type="button">ลบ</button>
+    </div>`).join('');
+}
+function addRecipeLine(){ recipeDraft.push({ingredient_id:'', quantity_used:''}); drawRecipeLines(); }
+function removeRecipeLine(idx){ recipeDraft.splice(idx,1); if(!recipeDraft.length) recipeDraft.push({ingredient_id:'',quantity_used:''}); drawRecipeLines(); }
+async function saveRecipe(){
+  const menuId = parseInt(document.getElementById('recipeMenuSelect').value);
+  const valid = recipeDraft.filter(l=>l.ingredient_id && l.quantity_used>0);
+  if(!valid.length){ document.getElementById('recipeSaveHint').textContent = 'กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 รายการ'; return; }
+  try{
+    await api('saveRecipe', {menu_id:menuId, lines:valid});
+    document.getElementById('recipeSaveHint').textContent = 'บันทึกสูตรแล้ว';
+    toast('บันทึกสูตรเมนูแล้ว');
+    renderMenuTable(); renderPosMenu(); renderRecipeEditor();
+  } catch(e){ toast(e.message,'danger'); }
+}
+
+/* =========================================================
+   MODULE 3: STOCK IN
+========================================================= */
+function renderStockInSelect(){
+  const sel = document.getElementById('siIngredient');
+  sel.innerHTML = db.ingredients.map(i=>`<option value="${i.ingredient_id}">${i.ingredient_name} (${i.purchase_unit})</option>`).join('');
+  document.getElementById('siReceivedDate').value = todayISO();
+  updateStockInHint();
+}
+function updateStockInHint(){
+  const id = parseInt(document.getElementById('siIngredient').value);
+  const i = db.ingredients.find(x=>x.ingredient_id===id);
+  const qty = parseFloat(document.getElementById('siQtyPurchase').value)||0;
+  if(!i){ document.getElementById('stockInHint').textContent=''; return; }
+  const converted = qty*i.conversion_rate;
+  document.getElementById('stockInHint').textContent =
+    `${fmt(qty)} ${i.purchase_unit} × อัตราแปลง ${fmt(i.conversion_rate)} = ${fmt(converted)} ${i.usage_unit} จะถูกเพิ่มเป็นล็อตใหม่`;
+}
+function autoExpireDate(){
+  const id = parseInt(document.getElementById('siIngredient').value);
+  const i = db.ingredients.find(x=>x.ingredient_id===id);
+  const received = document.getElementById('siReceivedDate').value || todayISO();
+  if(!i) return;
+  const d = new Date(received+'T00:00:00');
+  d.setDate(d.getDate()+i.shelf_life_days);
+  document.getElementById('siExpireDate').value = d.toISOString().slice(0,10);
+}
+async function submitStockIn(){
+  const payload = {
+    ingredient_id: parseInt(document.getElementById('siIngredient').value),
+    qty_purchase: parseFloat(document.getElementById('siQtyPurchase').value),
+    received_date: document.getElementById('siReceivedDate').value,
+    expire_date: document.getElementById('siExpireDate').value,
+  };
+  if(!payload.qty_purchase || payload.qty_purchase<=0){ toast('กรุณาระบุจำนวนที่รับเข้า','danger'); return; }
+  if(!payload.received_date || !payload.expire_date){ toast('กรุณาระบุวันที่รับเข้าและวันหมดอายุ','danger'); return; }
+  try{
+    const res = await api('stockIn', payload);
+    toast(`รับเข้า ${res.ingredient_name} จำนวน ${fmt(res.converted)} ${res.usage_unit} เรียบร้อย — สร้างล็อต #${res.lot_id}`);
+    document.getElementById('siQtyPurchase').value='';
+    updateStockInHint();
+    renderLotTable(); renderReceivingHistory(); updateTopAlerts();
+  } catch(e){ toast(e.message,'danger'); }
+}
+function renderReceivingHistory(){
+  const rows = db.receiving_history.slice(0,8);
+  document.getElementById('receivingHistoryList').innerHTML = rows.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>ล็อต</th><th>วัตถุดิบ</th><th>จำนวน (หน่วยใช้)</th><th>วันที่</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const lot = db.stock_lot.find(l=>l.lot_id===r.lot_id);
+      return `<tr><td>#${r.lot_id}</td><td>${lot?ingName(lot.ingredient_id):'—'}</td><td>${fmt(r.received_qty_usage_unit)}</td><td>${fmtDateTime(r.received_at)}</td></tr>`;
+    }).join('')}</tbody>
+  </table></div>` : `<div class="empty">ยังไม่มีประวัติการรับเข้า</div>`;
+}
+function renderLotTable(){
+  const q = (document.getElementById('lotSearch').value||'').toLowerCase();
+  const rows = [...db.stock_lot].filter(l=>ingName(l.ingredient_id).toLowerCase().includes(q))
+    .sort((a,b)=>a.expire_date.localeCompare(b.expire_date));
+  document.getElementById('lotTableBody').innerHTML = rows.length ? rows.map(l=>{
+    const dleft = daysUntil(l.expire_date);
+    let status = `<span class="tag ok">ปกติ</span>`;
+    if(l.quantity_remaining<=0) status = `<span class="tag muted">หมดล็อต</span>`;
+    else if(dleft<0) status = `<span class="tag danger">หมดอายุแล้ว</span>`;
+    else if(dleft<=5) status = `<span class="tag warn">ใกล้หมดอายุ (${dleft}ว.)</span>`;
+    return `<tr><td>#${l.lot_id}</td><td>${ingName(l.ingredient_id)}</td><td>${fmt(l.quantity_remaining)}</td><td>${l.received_date}</td><td>${l.expire_date}</td><td>${status}</td></tr>`;
+  }).join('') : `<tr><td colspan="6"><div class="empty">ไม่มีล็อตสินค้า</div></td></tr>`;
+}
+
+/* =========================================================
+   MODULE 4: SALES (POS + auto stock deduction)
+========================================================= */
+let cart = []; // {key, menu_id, qty, excluded:[ingredient_id]}
+let custom = null; // modal state {menu_id, excluded:Set, qty, editKey}
+
+function cartKey(menu_id, excluded){ return menu_id+'|'+[...excluded].sort((x,y)=>x-y).join(','); }
+function recipeLines(menu_id){ return db.recipe.filter(r=>r.menu_id===menu_id); }
+
+// total ingredient requirement of a list of cart-like items
+function requirementOf(items){
+  const need = {};
+  items.forEach(c=>{
+    recipeLines(c.menu_id).forEach(l=>{
+      if(c.excluded.includes(l.ingredient_id)) return;
+      need[l.ingredient_id] = (need[l.ingredient_id]||0) + l.quantity_used*c.qty;
+    });
+  });
+  return need;
+}
+function shortages(items){
+  const need = requirementOf(items);
+  return Object.entries(need).filter(([id,q])=>stockRemaining(parseInt(id)) + 1e-9 < q).map(([id,q])=>({id:parseInt(id), need:q, have:stockRemaining(parseInt(id))}));
+}
+function menuAvailability(menu_id){
+  const lines = recipeLines(menu_id);
+  if(!lines.length) return {ok:false, full:false, reason:'ยังไม่ได้ตั้งสูตรเมนู'};
+  const full = shortages([...cart, {menu_id, qty:1, excluded:[]}]).length===0;
+  return {ok:true, full, reason: full ? '' : 'วัตถุดิบบางรายการไม่พอ'};
+}
+
+function renderPosMenu(){
+  const grid = document.getElementById('posMenuGrid');
+  const active = db.menu.filter(m=>m.status==='active');
+  grid.innerHTML = active.length ? active.map(m=>{
+    const avail = menuAvailability(m.menu_id);
+    return `<div class="menu-tile ${avail.ok?'':'unavailable'}" onclick="${avail.ok?`openCustomize(${m.menu_id})`:''}">
+      <div class="mname">${m.menu_name}</div>
+      <div class="mprice">${money(m.price)}</div>
+      ${avail.reason ? `<div class="mflag">${avail.reason}</div>` : ''}
+    </div>`;
+  }).join('') : `<div class="empty">ยังไม่มีเมนู — เพิ่มเมนูในโมดูลข้อมูลหลักก่อน</div>`;
+}
+
+/* ---- customize modal: choose ingredients to leave out ---- */
+function openCustomize(menu_id, editKey){
+  const existing = editKey ? cart.find(c=>c.key===editKey) : null;
+  custom = { menu_id, excluded:new Set(existing?existing.excluded:[]), qty: existing?existing.qty:1, editKey: editKey||null };
+  drawCustomize();
+}
+function drawCustomize(){
+  const m = db.menu.find(x=>x.menu_id===custom.menu_id);
+  const lines = recipeLines(custom.menu_id);
+  // stock check excluding the line being edited
+  const others = cart.filter(c=>c.key!==custom.editKey);
+  const draft = {menu_id:custom.menu_id, qty:custom.qty, excluded:[...custom.excluded]};
+  const short = shortages([...others, draft]);
+  const shortIds = new Set(short.map(x=>x.id));
+  const optHTML = (l)=>{
+    const ing = db.ingredients.find(i=>i.ingredient_id===l.ingredient_id);
+    const off = custom.excluded.has(l.ingredient_id);
+    const isShort = !off && shortIds.has(l.ingredient_id);
+    return `<label class="ing-opt ${off?'off':''} ${isShort?'short':''}">
+      <input type="checkbox" ${off?'':'checked'} onchange="toggleExclude(${l.ingredient_id})">
+      <span class="io-name">${ing.ingredient_name}</span>
+      ${isShort?'<span class="io-flag">ไม่พอ</span>':''}
+      <span class="io-qty">${fmt(l.quantity_used)} ${ing.usage_unit}/ที่</span>
+    </label>`;
+  };
+  const raw = lines.filter(l=>db.ingredients.find(i=>i.ingredient_id===l.ingredient_id)?.type==='raw_material');
+  const pack = lines.filter(l=>db.ingredients.find(i=>i.ingredient_id===l.ingredient_id)?.type==='packaging');
+  const excludedNames = [...custom.excluded].map(ingName);
+  renderModal(`
+    <h3>${m.menu_name}</h3>
+    <p class="modal-sub">${money(m.price)} · ติ๊กออกสำหรับวัตถุดิบที่ลูกค้า<b>ไม่ใส่</b> ระบบจะไม่ตัดวัตถุดิบนั้นออกจากล็อต</p>
+    ${raw.length?`<div class="io-group">วัตถุดิบ</div>${raw.map(optHTML).join('')}`:''}
+    ${pack.length?`<div class="io-group">บรรจุภัณฑ์</div>${pack.map(optHTML).join('')}`:''}
+    <div class="divider"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:.78rem; color:var(--ink-soft); margin-bottom:6px;">จำนวน</div>
+        <div class="qty-stepper">
+          <button type="button" onclick="customQty(-1)">−</button><span>${custom.qty}</span><button type="button" onclick="customQty(1)">+</button>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.78rem; color:var(--ink-soft);">ไม่ใส่</div>
+        <div style="font-size:.85rem; font-weight:600;">${excludedNames.length?excludedNames.join(', '):'— (ใส่ครบตามสูตร)'}</div>
+      </div>
+    </div>
+    ${short.length?`<div class="hint" style="color:#6B5A2E; margin-top:12px;">วัตถุดิบไม่พอ: ${short.map(x=>`${ingName(x.id)} (ต้องใช้ ${fmt(x.need)} มี ${fmt(x.have)})`).join(', ')} — ลองติ๊กออกหรือลดจำนวน</div>`:''}
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn primary" ${short.length?'disabled':''} onclick="confirmCustomize()">${custom.editKey?'บันทึกการแก้ไข':'เพิ่มลงรายการ'} · ${money(m.price*custom.qty)}</button>
+    </div>`);
+}
+function toggleExclude(id){
+  if(custom.excluded.has(id)) custom.excluded.delete(id); else custom.excluded.add(id);
+  drawCustomize();
+}
+function customQty(d){ custom.qty = Math.max(1, custom.qty+d); drawCustomize(); }
+function confirmCustomize(){
+  const excluded = [...custom.excluded].sort((a,b)=>a-b);
+  const others = cart.filter(c=>c.key!==custom.editKey);
+  const item = {menu_id:custom.menu_id, qty:custom.qty, excluded, key:cartKey(custom.menu_id, excluded)};
+  if(shortages([...others, item]).length){ toast('วัตถุดิบไม่พอ','danger'); return; }
+  const same = others.find(c=>c.key===item.key);
+  if(same){ same.qty += item.qty; cart = others; }
+  else { cart = others; cart.push(item); }
+  closeModal(); renderCart(); renderPosMenu();
+}
+
+function changeCartQty(key, delta){
+  const item = cart.find(c=>c.key===key);
+  if(!item) return;
+  const next = item.qty+delta;
+  if(next<=0){ cart = cart.filter(c=>c.key!==key); }
+  else {
+    const trial = cart.map(c=>c.key===key?{...c, qty:next}:c);
+    if(shortages(trial).length){ toast('วัตถุดิบไม่พอ','danger'); return; }
+    item.qty = next;
+  }
+  renderCart(); renderPosMenu();
+}
+function renderCart(){
+  const wrap = document.getElementById('cartItems');
+  const empty = document.getElementById('cartEmpty');
+  empty.style.display = cart.length? 'none':'block';
+  wrap.innerHTML = cart.map(c=>{
+    const m = db.menu.find(x=>x.menu_id===c.menu_id);
+    const ex = c.excluded.map(ingName);
+    return `<div class="cart-item">
+      <div>
+        <div>${m.menu_name}<button class="cart-edit" onclick="openCustomize(${c.menu_id}, '${c.key}')">แก้ไข</button></div>
+        <div class="hint" style="margin:0;">${money(m.price)} × ${c.qty}</div>
+        ${ex.length?`<span class="cart-exclude">ไม่ใส่: ${ex.join(', ')}</span>`:''}
+      </div>
+      <div class="qtybtns">
+        <button onclick="changeCartQty('${c.key}',-1)">−</button>
+        <span>${c.qty}</span>
+        <button onclick="changeCartQty('${c.key}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  const total = cart.reduce((s,c)=>{ const m = db.menu.find(x=>x.menu_id===c.menu_id); return s+m.price*c.qty; },0);
+  document.getElementById('cartTotal').textContent = money(total);
+}
+
+/* ---- checkout: validate everything, then deduct lots FEFO (single "transaction") ---- */
+async function checkout(){
+  if(!cart.length){ toast('ยังไม่มีรายการในตะกร้า','danger'); return; }
+  const short = shortages(cart);
+  if(short.length){
+    document.getElementById('checkoutHint').textContent = `วัตถุดิบไม่พอ: ${short.map(x=>ingName(x.id)).join(', ')} — ยกเลิกการขายทั้งบิล`;
+    toast('ยกเลิกการขาย: วัตถุดิบไม่เพียงพอ','danger');
+    return;
+  }
+  const items = cart.map(c=>({menu_id:c.menu_id, qty:c.qty, excluded:c.excluded}));
+  // วัตถุดิบที่ไม่ถูกตัด (ลูกค้าไม่ใส่) — คำนวณไว้แสดงผล
+  const saved = {};
+  cart.forEach(c=>c.excluded.forEach(id=>{
+    const line = recipeLines(c.menu_id).find(l=>l.ingredient_id===id);
+    if(line) saved[id]=(saved[id]||0)+line.quantity_used*c.qty;
+  }));
+  try{
+    // ส่งรายการไปให้ Apps Script ตรวจสต็อก + ตัดล็อต FEFO + บันทึกบิล ในครั้งเดียว
+    const res = await api('checkout', {items}, 'กำลังบันทึกการขายและตัดสต็อก…');
+    document.getElementById('deductSummary').innerHTML = `
+      <div class="deduct-box">
+        <div class="db-title">บิล #${res.sale_id} — วัตถุดิบที่ถูกตัดออกจากล็อต (FEFO)</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>วัตถุดิบ</th><th>ล็อต</th><th>ตัดออก</th><th>คงเหลือในล็อต</th></tr></thead>
+          <tbody>${res.movements.map(mv=>{ const ing=db.ingredients.find(i=>i.ingredient_id===mv.ingredient_id)||{};
+            return `<tr><td>${ing.ingredient_name||'—'}</td><td>#${mv.lot_id}</td><td>${fmt(mv.qty)} ${ing.usage_unit||''}</td><td>${fmt(mv.left)}</td></tr>`; }).join('')}</tbody>
+        </table></div>
+        ${Object.keys(saved).length?`<div class="hint">ไม่ถูกตัด (ลูกค้าไม่ใส่): ${Object.entries(saved).map(([id,q])=>{const ing=db.ingredients.find(i=>i.ingredient_id===parseInt(id))||{}; return `${ing.ingredient_name} ${fmt(q)} ${ing.usage_unit}`;}).join(', ')}</div>`:''}
+      </div>`;
+    toast(`บันทึกการขายบิล #${res.sale_id} สำเร็จ — ${money(res.total)}`);
+    document.getElementById('checkoutHint').textContent='';
+    cart = [];
+    renderCart(); renderPosMenu(); renderSalesHistory(); updateTopAlerts();
+  } catch(e){
+    document.getElementById('checkoutHint').textContent = e.message;
+    toast(e.message,'danger');
+    renderPosMenu();
+  }
+}
+function renderSalesHistory(){
+  const rows = [...db.sales].sort((a,b)=>b.sale_datetime.localeCompare(a.sale_datetime)).slice(0,10);
+  document.getElementById('salesHistoryBody').innerHTML = rows.length ? rows.map(s=>{
+    const details = db.sales_detail.filter(d=>d.sale_id===s.sale_id);
+    const itemsStr = details.map(d=>{
+      const ex = (d.excluded_ingredients||[]).map(ingName);
+      return `${menuName(d.menu_id)} ×${d.quantity}${ex.length?` <span class="cart-exclude">ไม่ใส่: ${ex.join(', ')}</span>`:''}`;
+    }).join('<br>');
+    return `<tr><td>#${s.sale_id}</td><td>${fmtDateTime(s.sale_datetime)}</td><td>${userName(s.user_id)}</td><td>${itemsStr}</td><td>${money(s.total_amount)}</td></tr>`;
+  }).join('') : `<tr><td colspan="5"><div class="empty">ยังไม่มีรายการขาย</div></td></tr>`;
+}
+
+/* =========================================================
+   MODULE 5: WASTE
+========================================================= */
+function renderWasteIngredientSelect(){
+  const sel = document.getElementById('wasteIngredient');
+  sel.innerHTML = db.ingredients.map(i=>`<option value="${i.ingredient_id}">${i.ingredient_name}</option>`).join('');
+  renderWasteLotOptions();
+}
+function renderWasteLotOptions(){
+  const id = parseInt(document.getElementById('wasteIngredient').value);
+  const sel = document.getElementById('wasteLot');
+  const lots = db.stock_lot.filter(l=>l.ingredient_id===id && l.quantity_remaining>0).sort((a,b)=>a.expire_date.localeCompare(b.expire_date));
+  sel.innerHTML = `<option value="">— ไม่ระบุล็อต —</option>` + lots.map(l=>`<option value="${l.lot_id}">ล็อต #${l.lot_id} · คงเหลือ ${fmt(l.quantity_remaining)} · หมดอายุ ${l.expire_date}</option>`).join('');
+}
+async function submitWaste(){
+  const ingredient_id = parseInt(document.getElementById('wasteIngredient').value);
+  const lotVal = document.getElementById('wasteLot').value;
+  const qty = parseFloat(document.getElementById('wasteQty').value);
+  const reason = document.getElementById('wasteReason').value;
+  if(!qty || qty<=0){ toast('กรุณาระบุจำนวนที่เสีย','danger'); return; }
+  try{
+    await api('waste', {ingredient_id, lot_id: lotVal ? parseInt(lotVal) : null, qty, reason});
+    document.getElementById('wasteHint').textContent = '';
+    document.getElementById('wasteQty').value='';
+    toast('บันทึกของเสียแล้ว และตัดยอดคงเหลือเรียบร้อย');
+    renderWasteLotOptions(); renderWasteHistory(); updateTopAlerts();
+  } catch(e){ document.getElementById('wasteHint').textContent = e.message; toast(e.message,'danger'); }
+}
+function renderWasteHistory(){
+  const rows = db.waste_record.slice(0,10);
+  document.getElementById('wasteHistoryList').innerHTML = rows.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>วัตถุดิบ</th><th>จำนวน</th><th>เหตุผล</th><th>บันทึกโดย</th><th>เวลา</th></tr></thead>
+    <tbody>${rows.map(w=>`<tr><td>${ingName(w.ingredient_id)}</td><td>${fmt(w.quantity_wasted)}</td><td>${w.reason}</td><td>${userName(w.recorded_by)}</td><td>${fmtDateTime(w.recorded_at)}</td></tr>`).join('')}</tbody>
+  </table></div>` : `<div class="empty">ยังไม่มีบันทึกของเสีย</div>`;
+}
+
+/* =========================================================
+   MODULE 6: REPORTS
+========================================================= */
+function renderReports(){
+  applyCardIcons();
+  const low = lowStockList();
+  const exp = expiringLots(7);
+  const totalRevenue = db.sales.reduce((s,x)=>s+x.total_amount,0);
+  const billCount = db.sales.length;
+  const avgBill = billCount ? totalRevenue/billCount : 0;
+  const totalCups = db.sales_detail.reduce((s,d)=>s+d.quantity,0);
+
+  document.getElementById('reportStats').innerHTML =
+    statCard('g-deep','coin','ยอดขายรวมทั้งหมด', money(totalRevenue), `${totalCups} แก้ว`) +
+    statCard('g-mid','receipt','บิลขายทั้งหมด', `${billCount} บิล`, 'นับจาก tbl_sales') +
+    statCard('g-cream','chart','ยอดเฉลี่ยต่อบิล', money(avgBill), 'รายได้ ÷ จำนวนบิล') +
+    statCard('g-white','trash','บันทึกของเสีย', `${db.waste_record.length} รายการ`, 'จาก tbl_waste_record');
+
+  document.getElementById('reportLowStockBody').innerHTML = low.length ? low.map(i=>`
+    <tr><td>${i.ingredient_name}</td><td>${fmt(i.remaining)} ${i.usage_unit}</td><td>${fmt(i.reorder_point)} ${i.usage_unit}</td>
+    <td><span class="chip ${i.remaining<=0?'c-deep':'c-cream'}">${i.remaining<=0?'หมด':'ใกล้หมด'}</span></td></tr>
+  `).join('') : `<tr><td colspan="4">${allGood('สต็อกทุกรายการอยู่ในระดับปกติ')}</td></tr>`;
+
+  document.getElementById('reportExpBody').innerHTML = exp.length ? exp.map(l=>`
+    <tr><td>${ingName(l.ingredient_id)}</td><td><span class="bill-chip">#${l.lot_id}</span></td><td>${fmt(l.quantity_remaining)}</td>
+    <td>${l.expire_date}<br>${expChip(daysUntil(l.expire_date))}</td></tr>
+  `).join('') : `<tr><td colspan="4">${allGood('ไม่มีล็อตใกล้หมดอายุ')}</td></tr>`;
+
+  document.getElementById('reportStockLevels').innerHTML = db.ingredients
+    .map(i=>({...i, remaining:stockRemaining(i.ingredient_id)}))
+    .map(i=>stockBarHTML(i)).join('') || `<div class="empty">ยังไม่มีวัตถุดิบ</div>`;
+
+  const menuTotals = {};
+  db.sales_detail.forEach(d=>{
+    if(!menuTotals[d.menu_id]) menuTotals[d.menu_id] = {qty:0, revenue:0};
+    menuTotals[d.menu_id].qty += d.quantity;
+    menuTotals[d.menu_id].revenue += d.subtotal;
+  });
+  const topMenu = Object.entries(menuTotals).sort((a,b)=>b[1].qty-a[1].qty);
+  const maxQty = topMenu.length ? topMenu[0][1].qty : 1;
+  document.getElementById('reportTopMenu').innerHTML = topMenu.length ? topMenu.map(([id,v],idx)=>{
+    const color = PALETTE[Math.min(idx, 5)];
+    const rcls = idx===0?'r1':idx===1?'r2':idx===2?'r3':'rn';
+    return `<div class="bar-row">
+      <div class="bar-top"><span><span class="rank ${rcls}">${idx+1}</span>${menuName(parseInt(id))}</span>
+      <span class="muted">${v.qty} แก้ว · ${money(v.revenue)}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${v.qty/maxQty*100}%; background:${color};"></div></div>
+    </div>`;
+  }).join('') : `<div class="empty">ยังไม่มีข้อมูลการขาย</div>`;
+
+  const byReason = {};
+  db.waste_record.forEach(w=>{ byReason[w.reason]=(byReason[w.reason]||0)+1; });
+  const reasonItems = Object.entries(byReason).map(([r,c],i)=>({label:r, value:c, color:PALETTE[(i*2+1)%PALETTE.length]}));
+  document.getElementById('reportWaste').innerHTML = reasonItems.length
+    ? donutHTML(reasonItems,'รายการ') : allGood('ยังไม่มีของเสีย');
+
+  document.getElementById('reportProfit').innerHTML = `
+    <div class="grid-3">
+      ${statCard('g-deep','cash','รายได้จากการขาย', money(totalRevenue))}
+      ${statCard('g-cream','cup','จำนวนแก้วที่ขายได้', `${totalCups} แก้ว`)}
+      ${statCard('g-white','calc','ต้นทุนวัตถุดิบ', 'ยังไม่มีข้อมูล', 'ต้องเพิ่มฟิลด์ unit_cost')}
+    </div>
+    <div class="hint" style="margin-top:12px;">หมายเหตุ: สคีมาต้นฉบับยังไม่มีราคาต้นทุนต่อหน่วย จึงยังคำนวณกำไร-ขาดทุนเป็นเงินบาทไม่ได้ — แนะนำเพิ่มฟิลด์ unit_cost ใน tbl_receiving_history</div>`;
+}
+
+/* =========================================================
+   MODULE 1: USAGE HISTORY (login/logout log)
+========================================================= */
+function userRoleLabel(user_id){
+  const u = db.users.find(x=>x.user_id===user_id);
+  return u ? (u.role==='owner' ? 'เจ้าของร้าน' : 'พนักงาน') : '—';
+}
+function userUsername(user_id){
+  const u = db.users.find(x=>x.user_id===user_id);
+  return u ? u.username : '—';
+}
+function renderLoginHistory(){
+  const rows = db.login_history;
+  document.getElementById('loginHistoryBody').innerHTML = rows.length ? rows.map(l=>`
+    <tr>
+      <td>${userName(l.user_id)}</td>
+      <td><span class="tag ${db.users.find(u=>u.user_id===l.user_id)?.role==='owner'?'ok':'muted'}">${userRoleLabel(l.user_id)}</span></td>
+      <td>${fmtDateTime(l.login_time)}</td>
+      <td>${l.logout_time?fmtDateTime(l.logout_time):'<span class="tag warn">ยังไม่ออกจากระบบ</span>'}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="4"><div class="empty">ไม่มีประวัติ</div></td></tr>`;
+}
+
+/* =========================================================
+   MODAL helpers
+========================================================= */
+function renderModal(html){
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.add('active');
+}
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('active'); }
+document.getElementById('modalBackdrop').addEventListener('click', e=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+
+document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
